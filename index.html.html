@@ -1,0 +1,640 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ระบบเช็คชื่อเข้าเรียน มหาวิทยาลัยเทคโนโลยีสุรนารี</title>
+
+<!-- QR Code Generator & Scanner Libraries -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode"></script>
+
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;background:#f4f6f8;color:#17202a}
+header{background:#17324d;color:#fff;padding:16px 20px;display:flex;justify-content:space-between;align-items:center}
+header h1{font-size:20px;margin:0}.badge{background:#2d7d46;padding:5px 9px;border-radius:999px;font-size:12px}
+nav{display:flex;gap:8px;padding:10px;background:#fff;border-bottom:1px solid #ddd}
+button{border:0;border-radius:9px;padding:9px 13px;cursor:pointer;font-weight:650}.nav{background:#edf1f5;color:#17202a}.nav.active{background:#17324d;color:#fff}
+main{max-width:1150px;margin:18px auto;padding:0 14px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.card{background:#fff;border:1px solid #e0e4e8;border-radius:14px;padding:16px;box-shadow:0 2px 8px #0000000a}
+h2{font-size:18px;margin:0 0 12px}.muted{color:#667085;font-size:13px}.row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #eee}
+select,input{width:100%;padding:9px;border:1px solid #cbd5df;border-radius:8px;margin-top:5px}label{display:block;margin:8px 0;font-size:14px}
+.primary{background:#1769aa;color:#fff}.success{background:#238636;color:#fff}.danger{background:#c62828;color:#fff}.warning{background:#b7791f;color:#fff}
+.hidden{display:none}.center{text-align:center}.notice{padding:10px;border-radius:99px;background:#eef6ff;margin-top:10px;font-size:13px}
+.pills{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0}.pill{background:#edf1f5}.pill.sel{background:#1769aa;color:#fff}
+.status{padding:5px 8px;border-radius:7px;font-size:12px;font-weight:700}.ok{background:#e5f6e9;color:#1d6b2f}.wait{background:#fff4d6;color:#815b08}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:8px;border-bottom:1px solid #eee;font-size:13px}
+.member{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid #eee}
+.qr{width:220px;max-width:100%;margin:10px auto;display:block}.small{font-size:12px}.actions{display:flex;flex-wrap:wrap;gap:8px}
+.error{background:#fde8e8;color:#9b1c1c}.good{background:#e5f6e9;color:#1d6b2f}
+
+:root {
+  --sut-orange:#f47b20;
+  --sut-orange-dark:#d96310;
+  --sut-charcoal:#34383d;
+  --sut-gray:#e5e7e9;
+  --sut-light:#f1f2f3;
+  --sut-white:#ffffff;
+}
+body { background:var(--sut-gray) !important; color:#20262b; }
+header {
+  background:linear-gradient(135deg,#ffffff 0%,#eceeef 62%,#d7dadd 100%) !important;
+  color:var(--sut-charcoal) !important; min-height:92px; padding:14px 22px !important;
+  border-bottom:4px solid var(--sut-orange); position:relative; overflow:hidden;
+}
+header h1 { font-size:22px !important; margin:0 !important; position:relative; z-index:2; padding-left:10px; line-height:1.35; }
+.badge { background:var(--sut-orange) !important; color:white; position:relative; z-index:3; }
+nav { background:var(--sut-charcoal) !important; border:0 !important; padding:9px 14px !important; }
+.nav { background:transparent !important; color:white !important; }
+.nav.active { background:var(--sut-orange) !important; color:white !important; }
+.card { border-color:#d2d5d8 !important; box-shadow:0 3px 12px rgba(0,0,0,.07) !important; }
+.primary { background:var(--sut-orange) !important; color:#fff !important }
+.success { background:#2f9e5b !important; color:#fff !important }
+.danger { background:#c62828 !important; color:#fff !important }
+.warning { background:#b7791f !important; color:#fff !important }
+.pill.sel { background:var(--sut-orange) !important; color:#fff }
+.pill { background:#eceeef }
+.status.ok { background:#e7f6ec; color:#24733e }
+.notice { background:#f0f1f2; border-radius:8px }
+table th { background:#f0f1f2 }
+#qr .card h2, #scores .card h2, #import .card h2, #export .card h2, #admin .card h2 { border-left:5px solid #f47b20; padding-left:10px }
+#reader { width:100%; max-width:400px; margin:0 auto; }
+</style>
+</head>
+<body>
+<header>
+  <h1>📍 ระบบเช็คชื่อเข้าเรียน มหาวิทยาลัยเทคโนโลยีสุรนารี</h1>
+  <span class="badge">SUT System v7</span>
+</header>
+<nav>
+  <button class="nav active" onclick="show('admin',this)">Admin</button>
+  <button class="nav" onclick="show('qr',this)">QR ห้อง</button>
+  <button class="nav" onclick="show('student',this)">นักศึกษา</button>
+  <button class="nav" onclick="show('import',this)">นำเข้าข้อมูล</button>
+  <button class="nav" onclick="show('scores',this)">คะแนนท้ายคาบ</button>
+  <button class="nav" onclick="show('export',this)">ส่งออกข้อมูล</button>
+</nav>
+
+<main>
+<!-- SECTION: ADMIN -->
+<section id="admin">
+<div class="grid">
+<div class="card">
+  <h2>ตั้งค่าคาบเรียน</h2>
+  <label>ห้อง<select id="room" onchange="render()"><option>2101</option><option>2102</option></select></label>
+  <label>รัศมี GPS (เมตร)<input id="radius" type="number" value="30"></label>
+  <label>เวลาเริ่ม<input id="start" type="time" value="08:30"></label>
+  <label>เวลาสิ้นสุด<input id="end" type="time" value="10:30"></label>
+  <button class="primary" onclick="openClass()">เปิดรับเช็คชื่อ</button>
+  <div id="msg" class="notice">ยังไม่ได้เปิดคาบเรียน</div>
+</div>
+<div class="card">
+  <h2>สรุปห้อง <span id="rtitle">2101</span></h2>
+  <div class="row"><span>นักศึกษาทั้งหมด</span><b id="totalStudentCount">33</b></div>
+  <div class="row"><span>เข้าเรียน</span><b id="present">0</b></div>
+  <div class="row"><span>ยังไม่เช็ก</span><b id="remain">33</b></div>
+  <div class="row"><span>กลุ่ม</span><b>11</b></div>
+</div>
+</div>
+<div class="card" style="margin-top:14px">
+  <h2>เลือกกลุ่ม</h2><div id="groups" class="pills"></div>
+</div>
+<div class="grid" style="margin-top:14px">
+  <div class="card"><h2>สมาชิกกลุ่ม <span id="gtitle">1</span></h2><div id="members"></div></div>
+  <div class="card"><h2>สรุป 11 กลุ่ม</h2><table><thead><tr><th>กลุ่ม</th><th>มา</th><th>รอ</th></tr></thead><tbody id="summary"></tbody></table></div>
+</div>
+</section>
+
+<!-- SECTION: QR -->
+<section id="qr" class="hidden">
+<div class="grid">
+  <div class="card center">
+    <h2>QR ถาวร ห้อง 2101</h2>
+    <div id="qrContainer2101" class="qr"></div>
+    <p><b>ROOM-2101</b></p>
+    <p class="small">สแกนแล้วระบบจะระบุห้อง 2101 ทันที</p>
+  </div>
+  <div class="card center">
+    <h2>QR ถาวร ห้อง 2102</h2>
+    <div id="qrContainer2102" class="qr"></div>
+    <p><b>ROOM-2102</b></p>
+    <p class="small">สแกนแล้วระบบจะระบุห้อง 2102 ทันที</p>
+  </div>
+</div>
+<div class="notice">หมายเหตุ: QR Code สร้างจาก URL ของ GitHub Pages อัตโนมัติ สามารถสแกนใช้งานได้ทันที</div>
+</section>
+
+<!-- SECTION: STUDENT CHECKIN -->
+<section id="student" class="hidden">
+<div class="card">
+  <h2>เช็คชื่อเข้าเรียน</h2>
+  <div id="scanner-box">
+    <p class="center">สแกน QR Code จากกล้องอุปกรณ์</p>
+    <div id="reader"></div>
+  </div>
+  
+  <div id="auth-form" class="hidden" style="margin-top:15px;">
+    <div class="grid">
+      <div>
+        <label>ห้อง<select id="sroom"><option>2101</option><option>2102</option></select></label>
+        <label>กลุ่ม<select id="sgroup"></select></label>
+      </div>
+      <div>
+        <label>รหัสนักศึกษา<input id="sid" value="661001"></label>
+        <label>ชื่อ-สกุล<input id="sname" value="นักศึกษาตัวอย่าง"></label>
+      </div>
+    </div>
+    <button class="primary" style="width:100%;margin-top:10px" onclick="checkin()">ยืนยันการเช็คชื่อ (GPS ผ่าน)</button>
+  </div>
+  <div id="result" class="notice" style="margin-top:10px">กดเปิดสแกนเนอร์หรือเลือกห้องเพื่อเช็คชื่อ</div>
+</div>
+</section>
+
+<!-- SECTION: IMPORT -->
+<section id="import" class="hidden">
+<div class="grid">
+<div class="card">
+  <h2>📥 นำเข้าข้อมูลนักศึกษา</h2>
+  <p class="muted">รองรับไฟล์ CSV รูปแบบ: ห้อง, กลุ่ม, รหัสนักศึกษา, ชื่อ-สกุล</p>
+  <input id="csvFile" type="file" accept=".csv,text/csv">
+  <div class="actions" style="margin-top:10px">
+    <button class="primary" onclick="importCSV()">นำเข้าข้อมูล</button>
+    <button class="success" onclick="downloadTemplate()">ดาวน์โหลดไฟล์ตัวอย่าง</button>
+  </div>
+  <div id="importMsg" class="notice">เลือกไฟล์ CSV แล้วกด “นำเข้าข้อมูล”</div>
+</div>
+<div class="card">
+  <h2>ตัวอย่างรูปแบบไฟล์ CSV</h2>
+  <table>
+    <thead><tr><th>ห้อง</th><th>กลุ่ม</th><th>รหัสนักศึกษา</th><th>ชื่อ-สกุล</th></tr></thead>
+    <tbody>
+      <tr><td>2101</td><td>1</td><td>661001</td><td>นาย ก</td></tr>
+      <tr><td>2101</td><td>1</td><td>661002</td><td>นาย ข</td></tr>
+      <tr><td>2101</td><td>1</td><td>661003</td><td>นาย ค</td></tr>
+    </tbody>
+  </table>
+</div>
+</div>
+<div class="card" style="margin-top:14px">
+  <h2>ข้อมูลที่นำเข้าแล้ว (<span id="importCount">0</span> ราย)</h2>
+  <table><thead><tr><th>ห้อง</th><th>กลุ่ม</th><th>รหัสนักศึกษา</th><th>ชื่อ-สกุล</th></tr></thead>
+  <tbody id="importedTable"><tr><td colspan="4" class="muted">ยังไม่มีข้อมูลที่นำเข้า</td></tr></tbody></table>
+</div>
+</section>
+
+<!-- SECTION: SCORES -->
+<section id="scores" class="hidden">
+<div class="card">
+  <h2>📝 คะแนนสอบท้ายคาบ</h2>
+  <p class="muted">บันทึกคะแนนของนักศึกษาตามรายชื่อจริงที่นำเข้า และส่งออกเป็น CSV สรุปตรงกับตารางรายชื่อ</p>
+  <div class="grid">
+    <label>ห้อง
+      <select id="scoreRoom" onchange="renderScoreTable()"><option>2101</option><option>2102</option></select>
+    </label>
+    <label>กลุ่ม
+      <select id="scoreGroup" onchange="renderScoreTable()"></select>
+    </label>
+    <label>คะแนนเต็ม
+      <input id="maxScore" type="number" min="0" value="10" onchange="renderScoreTable()">
+    </label>
+  </div>
+  <div id="scoreMsg" class="notice">เลือกห้องและกลุ่มเพื่อกรอกคะแนน</div>
+</div>
+
+<div class="card" style="margin-top:14px">
+  <h2>รายชื่อนักศึกษาและคะแนน</h2>
+  <table>
+    <thead><tr><th>ลำดับ</th><th>รหัสนักศึกษา</th><th>ชื่อ-สกุล</th><th>คะแนน</th><th>คิดเป็น %</th></tr></thead>
+    <tbody id="scoreTable"></tbody>
+  </table>
+  <div class="actions" style="margin-top:12px">
+    <button class="success" onclick="saveScores()">💾 บันทึกคะแนน</button>
+    <button class="primary" onclick="exportScores()">⬇ ส่งออกคะแนน CSV (ห้องที่เลือก)</button>
+    <button class="primary" onclick="exportAllScores()">⬇ ส่งออกคะแนนทั้งหมด (ทุกห้อง)</button>
+  </div>
+</div>
+</section>
+
+<!-- SECTION: EXPORT -->
+<section id="export" class="hidden">
+<div class="grid">
+<div class="card"><h2>ส่งออกข้อมูลการเข้าเรียน</h2><p class="muted">ไฟล์ CSV เปิดด้วย Excel ได้ รองรับข้อมูลภาษาไทยเต็มรูปแบบ</p>
+<label>ห้อง<select id="er"><option>2101</option><option>2102</option></select></label>
+<div class="actions">
+  <button class="success" onclick="exportCSV('2101')">⬇ CSV ห้อง 2101</button>
+  <button class="success" onclick="exportCSV('2102')">⬇ CSV ห้อง 2102</button>
+  <button class="primary" onclick="exportAll()">⬇ CSV ทั้งหมด (2101 & 2102)</button>
+</div>
+</div>
+<div class="card"><h2>ส่งออกสรุปกลุ่ม</h2><button class="primary" onclick="exportSummary()">⬇ CSV สรุป 22 กลุ่ม</button></div>
+</div>
+</section>
+</main>
+
+<footer style="margin-top:28px;background:#34383d;color:#fff;padding:18px 22px;border-top:4px solid #f47b20;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap">
+  <div><b style="color:#f47b20;font-size:20px">SUT</b> &nbsp; มหาวิทยาลัยเทคโนโลยีสุรนารี</div>
+  <div style="font-size:13px;color:#d9dcde">ระบบเช็คชื่อและคะแนนเข้าเรียน</div>
+</footer>
+
+<script>
+// Global Data State
+const attendance = {2101:{},2102:{}}; 
+const scoreData = {2101:{},2102:{}};
+let studentData = [];
+let open = false, group = 1;
+
+// Initialize Group Records
+for(const r of [2101,2102]){
+  for(let g=1;g<=11;g++){
+    attendance[r][g] = {};
+    scoreData[r][g] = {};
+  }
+}
+
+function show(id,b){
+  document.querySelectorAll('main>section').forEach(s=>s.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+  document.querySelectorAll('.nav').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+  
+  if(id === 'student') startQRScanner();
+  else stopQRScanner();
+}
+
+function getStudents(r, g){
+  r = String(r); g = Number(g);
+  if(studentData.length > 0){
+    const list = studentData.filter(s => String(s.room) === r && Number(s.group) === g);
+    if(list.length > 0) return list;
+  }
+  // Default Mock if no CSV imported
+  return [1,2,3].map(i => ({
+    room: r,
+    group: g,
+    id: r + String(g).padStart(2,'0') + String(i).padStart(2,'0'),
+    name: `นักศึกษากลุ่ม ${g} คนที่ ${i}`
+  }));
+}
+
+function render(){
+  let r = Number(room.value);
+  rtitle.textContent = r;
+  
+  let h = '';
+  for(let g=1;g<=11;g++) h += `<button class="pill ${g===group?'sel':''}" onclick="group=${g};render()">กลุ่ม ${g}</button>`;
+  groups.innerHTML = h;
+  gtitle.textContent = group;
+  
+  let currentGroupStudents = getStudents(r, group);
+  let m = '';
+  currentGroupStudents.forEach((st, idx) => {
+    let isPresent = attendance[r][group][st.id] ? true : false;
+    m += `<div class="member">
+            <span><b>${st.id}</b> - ${st.name}<br><span class="muted">กลุ่ม ${group}</span></span>
+            <span class="status ${isPresent?'ok':'wait'}">${isPresent?'เข้าเรียน':'รอ'}</span>
+          </div>`;
+  });
+  members.innerHTML = m;
+  
+  let s = '', pTotal = 0, totalCount = 0;
+  for(let g=1;g<=11;g++){
+    let gStudents = getStudents(r, g);
+    totalCount += gStudents.length;
+    let pCount = 0;
+    gStudents.forEach(st => { if(attendance[r][g][st.id]) pCount++; });
+    pTotal += pCount;
+    s += `<tr><td>กลุ่ม ${g}</td><td>${pCount}</td><td>${gStudents.length - pCount}</td></tr>`;
+  }
+  summary.innerHTML = s;
+  present.textContent = pTotal;
+  remain.textContent = totalCount - pTotal;
+  totalStudentCount.textContent = totalCount;
+}
+
+function openClass(){
+  open = true;
+  msg.innerHTML = `<span class="status ok">เปิดรับเช็คชื่อแล้ว</span> ห้อง ${room.value} | ${start.value}–${end.value}`;
+}
+
+function checkin(){
+  if(!open){
+    result.innerHTML = '<span class="status error">ยังไม่เปิดคาบเรียนจากระบบ Admin</span>';
+    return;
+  }
+  let r = Number(sroom.value), g = Number(sgroup.value), id = sid.value.trim();
+  if(!id){
+    result.innerHTML = '<span class="status error">กรุณากรอกรหัสนักศึกษา</span>';
+    return;
+  }
+  
+  attendance[r][g][id] = { time: new Date().toLocaleTimeString('th-TH') };
+  let t = new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+  result.innerHTML = `<span class="status ok">เช็คชื่อสำเร็จ</span><br>ห้อง ${r} | กลุ่ม ${g} | รหัส ${id} | ${t} | GPS ผ่าน`;
+  
+  room.value = r; group = g; render();
+}
+
+function csv(rows){
+  return rows.map(a => a.map(x => `"${String(x??'').replaceAll('"','""')}"`).join(',')).join('\r\n');
+}
+
+function download(name, text){
+  let blob = new Blob(["\ufeff" + text], {type: "text/csv;charset=utf-8"});
+  let a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+// IMPORT CSV FUNCTION
+function parseCSV(text){
+  const rows=[]; let row=[], cell="", quoted=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i], n=text[i+1];
+    if(c==='"' && quoted && n==='"'){cell+='"';i++;continue}
+    if(c==='"'){quoted=!quoted;continue}
+    if(c===',' && !quoted){row.push(cell.trim());cell="";continue}
+    if((c==='\n' || c==='\r') && !quoted){
+      if(c==='\r' && n==='\n') i++;
+      row.push(cell.trim());cell="";
+      if(row.some(x=>x!=="")) rows.push(row);
+      row=[];continue
+    }
+    cell+=c;
+  }
+  if(cell!=="" || row.length){row.push(cell.trim()); if(row.some(x=>x!==""))rows.push(row)}
+  return rows;
+}
+
+function importCSV(){
+  const f = document.getElementById('csvFile').files[0];
+  if(!f){ importMsg.innerHTML='<span class="status error">กรุณาเลือกไฟล์ CSV</span>'; return; }
+  const reader = new FileReader();
+  reader.onload = () => {
+    let rows = parseCSV(reader.result.replace(/^\uFEFF/,''));
+    if(!rows.length){ importMsg.innerHTML='<span class="status error">ไฟล์ไม่มีข้อมูล</span>'; return; }
+    const header = rows[0].map(x => x.toLowerCase().replace(/\s/g,''));
+    const idx = {
+      room: header.findIndex(x => ['ห้อง','room'].includes(x)),
+      group: header.findIndex(x => ['กลุ่ม','group'].includes(x)),
+      id: header.findIndex(x => ['รหัสนักศึกษา','รหัส','studentid','id'].includes(x)),
+      name: header.findIndex(x => ['ชื่อ-สกุล','ชื่อสกุล','ชื่อ','name'].includes(x))
+    };
+    
+    if(Object.values(idx).some(x => x < 0)){
+      importMsg.innerHTML='<span class="status error">หัวตารางไม่ถูกต้อง ต้องมี: ห้อง, กลุ่ม, รหัสนักศึกษา, ชื่อ-สกุล</span>';
+      return;
+    }
+    
+    const data = [];
+    for(let i=1; i<rows.length; i++){
+      const r = rows[i];
+      if(r.length < 4 || !r[idx.id]) continue;
+      data.push({
+        room: String(r[idx.room]),
+        group: Number(r[idx.group]),
+        id: String(r[idx.id]),
+        name: String(r[idx.name] || '')
+      });
+    }
+    studentData = data;
+    renderImported();
+    renderScoreTable();
+    render();
+    importMsg.innerHTML = `<span class="status good">นำเข้าสำเร็จ ${data.length} รายการ</span>`;
+  };
+  reader.readAsText(f, 'UTF-8');
+}
+
+function renderImported(){
+  const t = document.getElementById('importedTable');
+  document.getElementById('importCount').textContent = studentData.length;
+  if(!studentData.length){
+    t.innerHTML = '<tr><td colspan="4" class="muted">ยังไม่มีข้อมูลที่นำเข้า</td></tr>';
+    return;
+  }
+  t.innerHTML = studentData.map(s => `<tr><td>${s.room}</td><td>${s.group}</td><td>${s.id}</td><td>${s.name}</td></tr>`).join('');
+}
+
+function downloadTemplate(){
+  const rows = [
+    ['ห้อง','กลุ่ม','รหัสนักศึกษา','ชื่อ-สกุล'],
+    ['2101','1','661001','นาย ก'],
+    ['2101','1','661002','นาย ข'],
+    ['2102','11','662066','นางสาว ตัวอย่าง']
+  ];
+  download('student_import_template.csv', csv(rows));
+}
+
+// SCORE MANAGEMENT FUNCTIONS
+function initScoreGroups(){
+  const s = document.getElementById('scoreGroup');
+  const sg = document.getElementById('sgroup');
+  s.innerHTML = ''; sg.innerHTML = '';
+  for(let g=1;g<=11;g++){
+    let o = document.createElement('option'); o.value = g; o.textContent = 'กลุ่ม ' + g;
+    s.appendChild(o);
+    let o2 = document.createElement('option'); o2.value = g; o2.textContent = 'กลุ่ม ' + g;
+    sg.appendChild(o2);
+  }
+}
+
+function renderScoreTable(){
+  const r = Number(document.getElementById('scoreRoom').value);
+  const g = Number(document.getElementById('scoreGroup').value || 1);
+  const max = Number(document.getElementById('maxScore').value) || 10;
+  
+  const students = getStudents(r, g);
+  document.getElementById('scoreTable').innerHTML = students.map((s, i) => {
+    const val = scoreData[r][g][s.id] !== undefined && scoreData[r][g][s.id] !== null ? scoreData[r][g][s.id] : '';
+    const pct = val === '' ? '—' : Math.round((Number(val)/max)*100) + '%';
+    return `<tr>
+      <td>${i+1}</td>
+      <td>${s.id}</td>
+      <td>${s.name}</td>
+      <td><input id="score_${r}_${g}_${s.id}" type="number" min="0" max="${max}" step="0.01" value="${val}" style="width:100px"></td>
+      <td id="pct_${r}_${g}_${s.id}">${pct}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('scoreMsg').textContent = `ห้อง ${r} | กลุ่ม ${g} | จำนวนนักศึกษา ${students.length} คน | คะแนนเต็ม ${max}`;
+}
+
+function saveScores(){
+  const r = Number(document.getElementById('scoreRoom').value);
+  const g = Number(document.getElementById('scoreGroup').value || 1);
+  const max = Number(document.getElementById('maxScore').value) || 10;
+  
+  const students = getStudents(r, g);
+  students.forEach(s => {
+    const el = document.getElementById(`score_${r}_${g}_${s.id}`);
+    if(el){
+      let v = el.value === '' ? null : Number(el.value);
+      if(v !== null) v = Math.max(0, Math.min(max, v));
+      scoreData[r][g][s.id] = v;
+      el.value = v === null ? '' : v;
+      
+      const pct = document.getElementById(`pct_${r}_${g}_${s.id}`);
+      if(pct) pct.textContent = v === null ? '—' : Math.round((v/max)*100) + '%';
+    }
+  });
+  document.getElementById('scoreMsg').innerHTML = '<span class="status ok">บันทึกคะแนนกลุ่มเรียบร้อยแล้ว</span>';
+}
+
+function getScoreRowsForRoom(r){
+  const max = Number(document.getElementById('maxScore').value) || 10;
+  const rows = [['ห้อง','กลุ่ม','รหัสนักศึกษา','ชื่อ-สกุล','คะแนนเต็ม','คะแนน','ร้อยละ (%)','สถานะเช็คชื่อ']];
+  
+  for(let g=1; g<=11; g++){
+    const students = getStudents(r, g);
+    students.forEach(s => {
+      const v = scoreData[r][g][s.id];
+      const isPresent = attendance[r][g][s.id] ? 'เข้าเรียน' : 'ยังไม่เช็คชื่อ';
+      rows.push([
+        r,
+        g,
+        s.id,
+        s.name,
+        max,
+        v === undefined || v === null ? '' : v,
+        v === undefined || v === null ? '' : Math.round((v/max)*100),
+        isPresent
+      ]);
+    });
+  }
+  return rows;
+}
+
+function exportScores(){
+  const r = Number(document.getElementById('scoreRoom').value);
+  download(`exam_scores_room_${r}.csv`, csv(getScoreRowsForRoom(r)));
+}
+
+function exportAllScores(){
+  const max = Number(document.getElementById('maxScore').value) || 10;
+  const rows = [['ห้อง','กลุ่ม','รหัสนักศึกษา','ชื่อ-สกุล','คะแนนเต็ม','คะแนน','ร้อยละ (%)','สถานะเช็คชื่อ']];
+  
+  for(const r of [2101, 2102]){
+    for(let g=1; g<=11; g++){
+      const students = getStudents(r, g);
+      students.forEach(s => {
+        const v = scoreData[r][g][s.id];
+        const isPresent = attendance[r][g][s.id] ? 'เข้าเรียน' : 'ยังไม่เช็คชื่อ';
+        rows.push([
+          r,
+          g,
+          s.id,
+          s.name,
+          max,
+          v === undefined || v === null ? '' : v,
+          v === undefined || v === null ? '' : Math.round((v/max)*100),
+          isPresent
+        ]);
+      });
+    }
+  }
+  download('exam_scores_all_rooms.csv', csv(rows));
+}
+
+// EXPORT ATTENDANCE FUNCTIONS
+function exportCSV(r){
+  r = Number(r);
+  let rows = [["ห้อง","กลุ่ม","รหัสนักศึกษา","ชื่อ-สกุล","สถานะ","เวลาเช็คชื่อ"]];
+  for(let g=1; g<=11; g++){
+    let students = getStudents(r, g);
+    students.forEach(s => {
+      let isPresent = attendance[r][g][s.id];
+      rows.push([
+        r,
+        g,
+        s.id,
+        s.name,
+        isPresent ? "เข้าเรียน" : "ยังไม่เช็คชื่อ",
+        isPresent ? isPresent.time : ""
+      ]);
+    });
+  }
+  download(`attendance_room_${r}.csv`, csv(rows));
+}
+
+function exportAll(){
+  let rows = [["ห้อง","กลุ่ม","รหัสนักศึกษา","ชื่อ-สกุล","สถานะ","เวลาเช็คชื่อ"]];
+  for(const r of [2101, 2102]){
+    for(let g=1; g<=11; g++){
+      let students = getStudents(r, g);
+      students.forEach(s => {
+        let isPresent = attendance[r][g][s.id];
+        rows.push([
+          r,
+          g,
+          s.id,
+          s.name,
+          isPresent ? "เข้าเรียน" : "ยังไม่เช็คชื่อ",
+          isPresent ? isPresent.time : ""
+        ]);
+      });
+    }
+  }
+  download("attendance_all_rooms.csv", csv(rows));
+}
+
+function exportSummary(){
+  let rows = [["ห้อง","กลุ่ม","สมาชิกทั้งหมด","เข้าเรียน","ยังไม่เช็คชื่อ"]];
+  for(const r of [2101,2102]){
+    for(let g=1;g<=11;g++){
+      let students = getStudents(r, g);
+      let pCount = 0;
+      students.forEach(s => { if(attendance[r][g][s.id]) pCount++; });
+      rows.push([r, g, students.length, pCount, students.length - pCount]);
+    }
+  }
+  download("group_summary.csv", csv(rows));
+}
+
+// QR CODE GENERATOR & SCANNER LOGIC
+function initQRCodes(){
+  const baseUrl = window.location.href.split('?')[0];
+  document.getElementById('qrContainer2101').innerHTML = '';
+  document.getElementById('qrContainer2102').innerHTML = '';
+
+  new QRCode(document.getElementById("qrContainer2101"), { text: baseUrl + "?room=2101", width: 200, height: 200 });
+  new QRCode(document.getElementById("qrContainer2102"), { text: baseUrl + "?room=2102", width: 200, height: 200 });
+}
+
+let html5QrcodeScanner = null;
+function startQRScanner(){
+  if(!html5QrcodeScanner){
+    html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 220 });
+    html5QrcodeScanner.render((decodedText) => {
+      document.getElementById('auth-form').classList.remove('hidden');
+      if(decodedText.includes('room=2102')) document.getElementById('sroom').value = "2102";
+      else document.getElementById('sroom').value = "2101";
+      document.getElementById('result').innerHTML = '<span class="status ok">สแกนสำเร็จ กรุณายืนยันตัวตน</span>';
+    });
+  }
+}
+
+function stopQRScanner(){
+  if(html5QrcodeScanner){
+    html5QrcodeScanner.clear();
+    html5QrcodeScanner = null;
+  }
+}
+
+// Initialization on Load
+window.onload = function(){
+  initScoreGroups();
+  initQRCodes();
+  render();
+  renderScoreTable();
+
+  const urlParams = new URLSearchParams(window.location.search);
+  if(urlParams.has('room')){
+    show('student', document.querySelectorAll('.nav')[2]);
+    document.getElementById('sroom').value = urlParams.get('room');
+    document.getElementById('auth-form').classList.remove('hidden');
+  }
+};
+</script>
+</body>
+</html>
